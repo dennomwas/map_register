@@ -1,0 +1,1 @@
+from map_api.models import marshmallow
