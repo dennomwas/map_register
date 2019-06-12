@@ -34,7 +34,7 @@ class Base(db.Model):
     date_modified = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
     def save(self):
-        ''' Save an object to database'''
+        ''' Save an object to database '''
         try:
             db.session.add(self)
             db.session.commit()
@@ -44,7 +44,7 @@ class Base(db.Model):
             return False
 
     def update(self):
-        ''' Update an existing object in the database'''
+        ''' Update an existing object in the database '''
         try:
             db.session.commit()
             return True
@@ -53,7 +53,7 @@ class Base(db.Model):
             return False
 
     def delete(self):
-        ''' delete an object from the database'''
+        ''' delete an object from the database '''
         try:
             db.session.delete(self)
             db.session.commit()
@@ -93,20 +93,20 @@ class User(Base):
         return check_password_hash(self.password_hash, password)
 
     def generate_auth_token(self, expiration=3600):
-        serializer = Serializer(Config.secret_key, expires_in=expiration)
-        return serializer.dumps({uuid: self.uuid})
+        serializer = Serializer(Config.SECRET_KEY, expires_in=expiration)
+        return serializer.dumps({'uuid': self.uuid})
 
     @staticmethod
     def verify_auth_token(token):
-        serializer = Serializer(Config.secret_key)
+        serializer = Serializer(Config.SECRET_KEY)
         try:
             data = serializer.loads(token)
 
         except SignatureExpired:
-            return jsonify(None, {'error': 'Expired Token'})
+            return jsonify(None, {'error': 'Expired Token, Login Again'})
 
         except BadSignature:
-            return jsonify(None, {'error': 'Invalid Token'})
+            return jsonify(None, {'error': 'Invalid Token, Login Again'})
 
         user = User.query.get(data['uuid'])
         return user

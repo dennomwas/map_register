@@ -6,7 +6,7 @@ class Config(object):
 
     PORT = 5000
     HOST = "127.0.0.1"
-    SECRET_KEY = os.getenv('SECRET_KEY')
+    SECRET_KEY = "0334065c-c3c5-47df-8053-5e11b934eaff"
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')

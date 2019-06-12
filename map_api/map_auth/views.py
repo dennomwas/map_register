@@ -11,9 +11,10 @@ api = Api(auth_blueprint)
 
 
 @auth.verify_password
-def verify_password(email_address, password):
+def verify_user_password(email_address, password):
 
     user = User.query.filter_by(email_address=email_address).first()
+    print(user, '\n\n\n\n\n')
     if not user or not user.verify_password(password):
         return False
     else:
@@ -22,7 +23,7 @@ def verify_password(email_address, password):
 
 
 @token_auth.verify_token
-def verify_token(token):
+def verify_user_token(token):
     user = User.verify_auth_token(token)
 
     if not user:
@@ -71,6 +72,7 @@ class LoginResource(Resource):
     def post(self):
         '''
         get user data
+        check if data is valid
         check if user exists in db
         check is passwords match
         login user/generate token
@@ -83,15 +85,13 @@ class LoginResource(Resource):
 
         user = User.query.filter_by(email_address=email_address).first()
 
-        if user and user.verify_password(user, password):
+        if user and verify_user_password(user.email_address, password):
 
             token = user.generate_auth_token()
             return jsonify({'message': 'Logged in successfully!',
-                            'user': user,
                             'token': token.decode('ascii')}, 201)
         else:
             return jsonify({'error': 'Check your Email Address/Password and try again'}, 201)
-
 
 api.add_resource(RegistrationResource, '/register', endpoint='registration')
 api.add_resource(LoginResource, '/login', endpoint='login')

@@ -1,8 +1,9 @@
 from flask import Flask
 
 # local imports
-from config import app_config
 from map_api.models import db
+from config import app_config
+
 
 
 
