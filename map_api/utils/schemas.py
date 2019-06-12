@@ -14,6 +14,9 @@ class UserSchema(marshmallow.Schema):
     email_address = fields.Email(required=True,
                                  error_messages={'error': 'Email cannot be blank'})
 
+    password = fields.String(required=True,
+                             error_messages={'error': 'Password cannot be blank'})
+
     date_created = fields.DateTime(dump_only=True)
     date_modified = fields.DateTime(dump_only=True)
 

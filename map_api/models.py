@@ -1,16 +1,24 @@
 import uuid
 from datetime import datetime
+from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_httpauth import HTTPBasicAuth
-from sqlalchemy.orm import relationship
-from sqlalchemy import ForeignKey, Column
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from flask_marshmallow import Marshmallow
+from sqlalchemy.orm import relationship
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import ForeignKey, Column
 from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer,
+                          BadSignature, SignatureExpired)
+
+# local imports
+from config import Config
 
 # initialize SQLalchemy
 db = SQLAlchemy()
 marshmallow = Marshmallow()
 auth = HTTPBasicAuth()
+token_auth = HTTPTokenAuth()
 
 
 def generate_uuid():
@@ -23,24 +31,49 @@ class Base(db.Model):
 
     uuid = db.Column(db.String, primary_key=True, default=generate_uuid)
     date_created = db.Column(db.DateTime,  default=datetime.utcnow)
-    date_modified = db.Column(db.DateTime,  default=datetime.utcnow,
-                              onupdate=datetime.utcnow)
+    date_modified = db.Column(db.DateTime, onupdate=datetime.utcnow)
+
+    def save(self):
+        ''' Save an object to database'''
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return True
+        except SQLAlchemyError as error:
+            db.session.rollback()
+            return False
+
+    def update(self):
+        ''' Update an existing object in the database'''
+        try:
+            db.session.commit()
+            return True
+        except SQLAlchemyError as error:
+            db.session.rollback()
+            return False
+
+    def delete(self):
+        ''' delete an object from the database'''
+        try:
+            db.session.delete(self)
+            db.session.commit()
+            return True
+        except SQLAlchemyError as error:
+            db.session.rollback()
+            return False
 
 
 class User(Base):
 
     __tablename__ = 'users'
 
-    first_name = db.Column(db.String(50))
-    last_name = db.Column(db.String(50))
-    email_address = db.Column(db.String(100))
-    password_hash = db.Column(db.String(50))
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    email_address = db.Column(db.String(100), nullable=False, unique=True)
+    password_hash = db.Column(db.String(), nullable=False)
     map = db.relationship("MapRegister",
-                          back_populates="users",
+                          backref="users",
                           lazy='dynamic')
-
-    def __repr__(self):
-        return '<User: {}>'.format(self.firstname)
 
     @property
     def password(self):
@@ -59,6 +92,32 @@ class User(Base):
 
         return check_password_hash(self.password_hash, password)
 
+    def generate_auth_token(self, expiration=3600):
+        serializer = Serializer(Config.secret_key, expires_in=expiration)
+        return serializer.dumps({uuid: self.uuid})
+
+    @staticmethod
+    def verify_auth_token(token):
+        serializer = Serializer(Config.secret_key)
+        try:
+            data = serializer.loads(token)
+
+        except SignatureExpired:
+            return jsonify(None, {'error': 'Expired Token'})
+
+        except BadSignature:
+            return jsonify(None, {'error': 'Invalid Token'})
+
+        user = User.query.get(data['uuid'])
+        return user
+        
+
+
+
+    def __repr__(self):
+        return '<User: {}>'.format(self.first_name)
+
+
 class MapRegister(Base):
 
     __tablename__ = 'map_register'
@@ -71,9 +130,6 @@ class MapRegister(Base):
     lr_no = db.Column(db.String(100))
     fr_no = db.Column(db.String(100))
     sheet_no = db.Column(db.String(100))
-    user = db.relationship("User",
-                           back_populates="map_register",
-                           lazy='dynamic')
     created_by = db.Column(db.String,
                            db.ForeignKey('users.uuid'),
                            nullable=False)
