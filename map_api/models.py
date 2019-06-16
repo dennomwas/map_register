@@ -29,7 +29,7 @@ class Base(db.Model):
 
     __abstract__ = True
 
-    uuid = db.Column(db.String, primary_key=True, default=generate_uuid)
+    id = db.Column(db.String, primary_key=True, default=generate_uuid)
     date_created = db.Column(db.DateTime,  default=datetime.utcnow)
     date_modified = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
@@ -87,6 +87,11 @@ class User(Base):
 
         self.password_hash = generate_password_hash(password)
 
+    def set_password(self, password):
+        """ Set password to a hashed password """
+
+        self.password_hash = generate_password_hash(password)
+
     def verify_password(self, password):
         """ Check hashed password matches actual password """
 
@@ -94,7 +99,7 @@ class User(Base):
 
     def generate_auth_token(self, expiration=3600):
         serializer = Serializer(Config.SECRET_KEY, expires_in=expiration)
-        return serializer.dumps({'uuid': self.uuid})
+        return serializer.dumps({'id': self.id})
 
     @staticmethod
     def verify_auth_token(token):
@@ -108,11 +113,8 @@ class User(Base):
         except BadSignature:
             return jsonify(None, {'error': 'Invalid Token, Login Again'})
 
-        user = User.query.get(data['uuid'])
+        user = User.query.get(data['id'])
         return user
-        
-
-
 
     def __repr__(self):
         return '<User: {}>'.format(self.first_name)
@@ -130,9 +132,13 @@ class MapRegister(Base):
     lr_no = db.Column(db.String(100))
     fr_no = db.Column(db.String(100))
     sheet_no = db.Column(db.String(100))
+
     created_by = db.Column(db.String,
-                           db.ForeignKey('users.uuid'),
+                           db.ForeignKey('users.id'),
                            nullable=False)
+    # modified_by = db.Column(db.String,
+    #                         db.ForeignKey('users.id'),
+    #                         nullable=True)
 
     def __repr__(self):
         return '<MapRegister: {}>'.format(self.map_name)

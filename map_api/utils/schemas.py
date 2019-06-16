@@ -1,9 +1,9 @@
 from map_api.models import marshmallow
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, ValidationError
 
 
 class UserSchema(marshmallow.Schema):
-    uuid = fields.String(dump_only=True)
+    id = fields.String(dump_only=True)
 
     first_name = fields.String(required=True,
                                error_messages={'error': 'First Name cannot be blank'})
@@ -22,9 +22,10 @@ class UserSchema(marshmallow.Schema):
 
 
 class MapRegisterSchema(marshmallow.Schema):
-    uuid = fields.String(dump_only=True)
+    id = fields.String(dump_only=True)
 
-    serial_no = fields.Integer(dump_only=True)
+    serial_no = fields.Integer(required=True,
+                               error_messages={'error': 'Serial No. is required'})
 
     map_name = fields.String(required=True,
                              error_messages={'error': 'Map Name is required'})

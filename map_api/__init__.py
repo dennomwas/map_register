@@ -1,11 +1,11 @@
 from flask import Flask
+from flask_mail import Mail
 
 # local imports
 from map_api.models import db
 from config import app_config
 
-
-
+mail = Mail()
 
 def create_app(config_name):
     app = Flask(__name__, instance_relative_config=True)
@@ -16,6 +16,7 @@ def create_app(config_name):
         pass
 
     db.init_app(app)
+    mail.init_app(app)
 
     from map_api.map_auth.views import auth_blueprint
     from map_api.map_views.views import map_blueprint

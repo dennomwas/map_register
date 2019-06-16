@@ -6,3 +6,7 @@ SQLALCHEMY_DATABASE_URI = "postgresql://{DB_USER}: {DB_PASS}@{DB_ADDR}/{DB_NAME}
 
 TEST_DATABASE_URI = "postgresql://{DB_USER}: {DB_PASS}@{DB_ADDR}/{DB_NAME}" \
     .format(DB_USER="postgres", DB_PASS="", DB_ADDR="127.0.0.1", DB_NAME="tests")
+
+MAIL_USERNAME = "githinji.mwangi@gmail.com"
+MAIL_DEFAULT_SENDER = "githinji.mwangi@gmail.com"
+MAIL_PASSWORD = "dhppzjzzxtetbwik"

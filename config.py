@@ -11,7 +11,16 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    MAIL_SERVER = 'smtp.gmail.com'
+    MAIL_PORT = 465
+    MAIL_USERNAME = os.getenv('USERNAME')
+    MAIL_PASSWORD = os.getenv('PASSWORD')
+    MAIL_DEFAULT_SENDER = os.getenv('USERNAME')
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
 
+    #administrators
+    ADMINS = ['githinji.mwangi@gmail.com']
 
 class DevelopmentConfig(Config):
     """Development configurations"""
