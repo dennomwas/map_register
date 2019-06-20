@@ -7,6 +7,7 @@ from flask_restful import Api, Resource
 from map_api.models import User, auth, token_auth
 from map_api.utils.schemas import UserSchema
 from map_api.utils.email import send_mail
+from config import Config
 
 auth_blueprint = Blueprint('auth_blueprint', __name__)
 auth_schema = UserSchema()
@@ -106,11 +107,9 @@ class ResetPasswordLinkResource(Resource):
         check if it matches with an email in the db
         send link on email to reset password
         '''
-        payload = request.get_json()
+        email_address = request.json.get('email_address')
 
-        if payload:
-            email_address = payload['email_address']
-
+        if email_address:
             user = User.query.filter_by(email_address=email_address).first()
             if not user:
                 return jsonify({'error': 'Email does not exist'})
@@ -118,12 +117,12 @@ class ResetPasswordLinkResource(Resource):
             token = user.generate_auth_token()
             reset_url = url_for('auth_blueprint.resetpassword',
                                 token=token, _external=True)
-            subject = "[Map Register] Password Reset Link"
+            subject = "[Map Register] Password Reset Notification"
             html = render_template(
                 'password_reset.html',
                 user=user, reset_url=reset_url)
-        
-            send_mail(subject, ['githinji.mwangi@gmail.com'], ['githinji.mwangi@gmail.com'], html)
+
+            send_mail(subject, Config.ADMINS[0], [email_address], html)
             return jsonify({'message': 'Check your Email/Spam Folder to reset the password'}, 200)
 
         return jsonify({'error': 'Please Check your fields and try again'}, 404)
@@ -136,24 +135,26 @@ class ResetPasswordResource(Resource):
         check if user exists
         reset password
         '''
-        payload = request.get_json()
-        token = request.args.get(token)
+        email_address = request.json.get('email_address')
+        password = request.json.get('password')
 
-        email_address = payload['email_address']
-        password = payload['password']
+        if not email_address and not password:
+            return jsonify({'error': 'Check your fields and try again'}, 404)
 
         user = User.query.filter_by(email_address=email_address).first()
         if user:
+            token = request.args.get(token)
             validate_user = user.verify_auth_token(token)
             if not validate_user:
                 return jsonify({'error': 'Operation not allowed'})
-            
+
             new_password = User.set_password(password)
             new_password.save()
 
             return jsonify({'message': 'Password reset successfully'})
 
         return jsonify({'error': 'Email does not exist'})
+
 
 class LogoutResource(AuthRequiredResource):
     def post(self):
@@ -162,10 +163,27 @@ class LogoutResource(AuthRequiredResource):
         return auth_header
 
 
-api.add_resource(RegistrationResource, '/register', endpoint='registration')
-api.add_resource(LoginResource, '/login', endpoint='login')
-api.add_resource(LogoutResource, '/logout', endpoint='logout')
+api.add_resource(RegistrationResource,
+                 '/register',
+                 '/register/',
+                 endpoint='registration')
+
+api.add_resource(LoginResource,
+                 '/login',
+                 '/login/',
+                 endpoint='login')
+
+api.add_resource(LogoutResource,
+                 '/logout',
+                 '/logout/',
+                 endpoint='logout')
+
 api.add_resource(ResetPasswordLinkResource,
-                 '/reset-password-link', endpoint='resetpasswordlink')
-api.add_resource(ResetPasswordResource, '/reset-password',
+                 '/reset-password-link',
+                 '/reset-password-link/',
+                 endpoint='resetpasswordlink')
+
+api.add_resource(ResetPasswordResource,
+                 '/reset-password',
+                 '/reset-password/',
                  endpoint='resetpassword')

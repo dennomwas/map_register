@@ -1,10 +1,12 @@
-from flask import Blueprint, request, json, jsonify, g
+from flask import Blueprint, request, json, jsonify, g, url_for
 from flask_restful import Api, Resource
+from flask_paginate import Pagination
 from sqlalchemy import and_, or_
 
 # local imports
 from map_api.models import MapRegister, auth, db
 from map_api.utils.schemas import MapRegisterSchema
+from map_api.utils.paginate import paginate_items
 from map_api.map_auth.views import AuthRequiredResource
 
 map_blueprint = Blueprint('map_blueprint', __name__)
@@ -71,12 +73,24 @@ class MapRegisterResource(AuthRequiredResource):
 
     def get(self):
 
-        all_maps = MapRegister.query.order_by(MapRegister.date_created).all()
-        if not all_maps:
-            return jsonify({'error': 'There are no Maps to Display'}, 404)
+        search_term = request.args.get('q')
 
-        results = map_schema.dump(all_maps, many=True).data
-        return results
+        if search_term:
+            search_results = MapRegister.query.filter(
+                or_(MapRegister.map_name.ilike('%' + search_term + '%'),
+                    MapRegister.area.ilike('%' + search_term + '%'),
+                    MapRegister.locality.ilike('%' + search_term + '%'))
+            ).all()
+
+            if not search_results:
+                return jsonify({'error': 'Your search did not yield any results'}, 404)
+
+            results = map_schema.dump(search_results, many=True).data
+            return jsonify({'results': results})
+
+        else:
+            data = paginate_items(MapRegister, map_schema)
+            return data
 
 
 class MapRegisterItemResource(AuthRequiredResource):
@@ -136,6 +150,6 @@ class MapRegisterItemResource(AuthRequiredResource):
         return jsonify({'message': 'Map Deleted Successfully'})
 
 
-api.add_resource(MapRegisterResource, '/', endpoint='mapregister')
-api.add_resource(MapRegisterItemResource, '/<string:id>',
+api.add_resource(MapRegisterResource, '', '/', endpoint='mapregister')
+api.add_resource(MapRegisterItemResource, '/<string:id>', '/<string:id>/',
                  endpoint='mapregisteritem')

@@ -18,9 +18,11 @@ class Config(object):
     MAIL_DEFAULT_SENDER = os.getenv('USERNAME')
     MAIL_USE_TLS = False
     MAIL_USE_SSL = True
+    PER_PAGE = 20
 
-    #administrators
+    # administrators
     ADMINS = ['githinji.mwangi@gmail.com']
+
 
 class DevelopmentConfig(Config):
     """Development configurations"""
