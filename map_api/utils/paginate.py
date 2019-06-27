@@ -20,11 +20,11 @@ def paginate_items(paginated_data, schema):
 
         if paginated_data.has_next:
             next_url = url_for('map_blueprint.mapregister',
-                               page=paginated_data.next_num)
+                               page=paginated_data.next_num, _external=True)
 
         if paginated_data.has_prev:
             previous_url = url_for('map_blueprint.mapregister',
-                                page=paginated_data.prev_num)
+                                   page=paginated_data.prev_num, _external=True)
 
         serialized_data = schema.dump(page_items, many=True).data
 
@@ -33,6 +33,7 @@ def paginate_items(paginated_data, schema):
             'current_page': paginated_data.page,
             'next_page': next_url,
             'count': paginated_data.total,
+            'pages': paginated_data.pages,
             'status': 200,
             'page_items': serialized_data
         })

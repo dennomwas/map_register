@@ -74,6 +74,7 @@ class MapRegisterResource(AuthRequiredResource):
     def get(self):
 
         search_term = request.args.get('q')
+        map_type = request.args.get('map-type')
 
         if search_term:
             search_results = MapRegister.query.filter(
@@ -81,13 +82,39 @@ class MapRegisterResource(AuthRequiredResource):
                     MapRegister.area.ilike('%' + search_term + '%'),
                     MapRegister.locality.ilike('%' + search_term + '%'))
             ).all()
-
             if not search_results:
                 return jsonify({'error': 'Your search did not yield any results'}, 404)
 
             results = map_schema.dump(search_results, many=True).data
             return jsonify({'results': results})
 
+        if map_type == 'rim-map':
+            rim_maps = MapRegister.query.filter_by(
+                map_type='RIM Map').all()
+
+            if rim_maps:
+                results = map_schema.dump(rim_maps, many=True).data
+                return jsonify({'results': results})
+            return jsonify({'error': 'No RIM Maps Available'}, 404)
+
+        elif map_type == 'survey-plan':
+            survey_plans = MapRegister.query.filter_by(
+                map_type='Survey Plan').all()
+
+            if survey_plans:
+                results = map_schema.dump(survey_plans, many=True).data
+                return jsonify({'results': results})
+            return jsonify({'error': 'No Survey Plans Available'}, 404)
+
+        elif map_type == 'topo-map':
+            topo_maps = MapRegister.query.filter_by(
+                map_type='Topo Map').all()
+
+            if topo_maps:
+                results = map_schema.dump(topo_maps, many=True).data
+                return jsonify({'results': results})
+            return jsonify({'error': 'No Topo Maps Available'}, 404)
+            
         else:
             data = paginate_items(MapRegister, map_schema)
             return data

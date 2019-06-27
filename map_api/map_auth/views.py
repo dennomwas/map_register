@@ -187,3 +187,4 @@ api.add_resource(ResetPasswordResource,
                  '/reset-password',
                  '/reset-password/',
                  endpoint='resetpassword')
+                 
