@@ -42,7 +42,7 @@ class MapRegisterResource(AuthRequiredResource):
                     MapRegister.map_type == map_type,
                     MapRegister.sheet_no == sheet_no)
             ).all()
-            if existing_map:
+            if existing_RIM_map:
                 return jsonify({'error': 'Map already exists'})
 
             existing_survey_plan_map = MapRegister.query.filter(
@@ -76,6 +76,10 @@ class MapRegisterResource(AuthRequiredResource):
         search_term = request.args.get('q')
         map_type = request.args.get('map-type')
 
+        if not search_term and not map_type:
+            data = paginate_items(MapRegister, map_schema)
+            return data
+
         if search_term:
             search_results = MapRegister.query.filter(
                 or_(MapRegister.map_name.ilike('%' + search_term + '%'),
@@ -84,9 +88,13 @@ class MapRegisterResource(AuthRequiredResource):
             ).all()
             if not search_results:
                 return jsonify({'error': 'Your search did not yield any results'}, 404)
-
+                
             results = map_schema.dump(search_results, many=True).data
             return jsonify({'results': results})
+
+        map_types = ['rim-map', 'survey-plan', 'topo-map']
+        if map_type not in map_types:
+            return jsonify({'error': 'Not a valid Map type'}, 404)
 
         if map_type == 'rim-map':
             rim_maps = MapRegister.query.filter_by(
@@ -114,11 +122,7 @@ class MapRegisterResource(AuthRequiredResource):
                 results = map_schema.dump(topo_maps, many=True).data
                 return jsonify({'results': results})
             return jsonify({'error': 'No Topo Maps Available'}, 404)
-            
-        else:
-            data = paginate_items(MapRegister, map_schema)
-            return data
-
+    
 
 class MapRegisterItemResource(AuthRequiredResource):
     def get(self, id):
