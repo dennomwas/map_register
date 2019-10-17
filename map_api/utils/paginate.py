@@ -1,15 +1,15 @@
-from flask import request, url_for
+from flask import request, url_for, jsonify
 from flask_paginate import Pagination
 
 # local imports
 from config import Config
 
 
-def paginate_items(paginated_data, schema):
+def paginate_items(query):
     page = request.args.get('page', 1, type=int)
     per_page = Config.PER_PAGE
 
-    paginated_data = paginated_data.query.paginate(
+    paginated_data = query.paginate(
         page=page,
         per_page=per_page)
 
@@ -26,7 +26,7 @@ def paginate_items(paginated_data, schema):
             previous_url = url_for('map_blueprint.mapregister',
                                    page=paginated_data.prev_num, _external=True)
 
-        serialized_data = schema.dump(page_items, many=True).data
+        # serialized_data = schema.dump(page_items, many=True).data
 
         return ({
             'previous_page': previous_url,
@@ -35,5 +35,5 @@ def paginate_items(paginated_data, schema):
             'count': paginated_data.total,
             'pages': paginated_data.pages,
             'status': 200,
-            'page_items': serialized_data
+            'page_items': page_items
         })
